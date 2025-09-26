@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete User - Admin Panel</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #182848 0%, #4b6cb7 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 968px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* --- Table Card Styles (Reused/Modified from main.html) --- */
+        .table-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            color: white;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .table-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .record-count {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: white;
+        }
+
+        .table-wrapper {
+            overflow-y: auto;
+            flex-grow: 1;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: rgba(0, 0, 0, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        td {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        tbody tr:hover td {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-admin { background: #dbeafe; color: #1e40af; }
+        .badge-donor { background: #d1fae5; color: #065f46; }
+        .badge-receiver { background: #fef3c7; color: #92400e; }
+        .badge-institution { background: #e9d5ff; color: #6b21a8; }
+
+        .loading, .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        /* --- End Table Card Styles --- */
+
+
+        /* --- Deletion Form Styles --- */
+        .delete-card {
+            background: linear-gradient(135deg, #dc3545 0%, #bd2130 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .delete-card h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+            padding-bottom: 10px;
+        }
+
+        .delete-form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .delete-form input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .delete-form button {
+            width: 100%;
+            padding: 15px;
+            background: #212529;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        .delete-form button:hover {
+            background: #000000;
+            transform: translateY(-2px);
+        }
+
+        .delete-form button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message-box {
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .message-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .message-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* --- Go Back Button --- */
+        .go-back-btn {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background 0.3s ease;
+            font-weight: 500;
+        }
+
+        .go-back-btn:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧹 DELETE USER ACCOUNT</h1>
+        </div>
+
+        <div class="content-grid">
+            <div class="table-card users-list">
+                <div class="table-header">
+                    <h2 class="table-title">Registered Users (Username & Type)</h2>
+                    <span class="record-count" id="usersCount">0 records</span>
+                </div>
+                <div class="table-wrapper">
+                    <div id="usersTableContainer">
+                        <div class="loading">
+                            <svg class="spinner" viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke-width="5" stroke="#fff"></circle></svg>
+                            <p>Loading user data...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="delete-card">
+                <div>
+                    <h2>Data Deletion Tool</h2>
+                    <form id="deleteForm" class="delete-form">
+                        <label for="usernameToDelete">Enter Username to Delete</label>
+                        <input type="text" id="usernameToDelete" placeholder="e.g., admin_user" required>
+                        
+                        <button type="submit" id="deleteButton">PERMANENTLY DELETE RECORD</button>
+                    </form>
+                    <div id="messageBox" class="message-box" style="display:none;"></div>
+                </div>
+                
+                <a href="main.html" class="go-back-btn">← Go Back to Log Viewer</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Use the same Supabase configuration as your main page
+        const SUPABASE_URL = 'https://webzraugawvynlhecefx.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndlYnpyYXVnYXd2eW5saGVjZWZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3OTM0OTUsImV4cCI6MjA3NDM2OTQ5NX0.lxSThsX4caJI9JFsADfUJMkpQ12jBscgSFkFhbWx2VI';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        const deleteForm = document.getElementById('deleteForm');
+        const usernameInput = document.getElementById('usernameToDelete');
+        const messageBox = document.getElementById('messageBox');
+        const deleteButton = document.getElementById('deleteButton');
+
+        // Helper function to render messages
+        function showMessage(message, isError = false) {
+            messageBox.textContent = message;
+            messageBox.className = isError ? 'message-box message-error' : 'message-box message-success';
+            messageBox.style.display = 'block';
+        }
+
+        // Helper function to render the user list table
+        function renderUsersTable(users) {
+            const container = document.getElementById('usersTableContainer');
+            document.getElementById('usersCount').textContent = `${users.length} records`;
+            
+            if (users.length === 0) {
+                container.innerHTML = `<div class="empty-state"><p>No users found</p></div>`;
+                return;
+            }
+            
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Loginner Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            users.forEach(user => {
+                html += `
+                    <tr>
+                        <td>${user.username || 'N/A'}</td>
+                        <td><span class="badge badge-${user.loginner_type}">${user.loginner_type}</span></td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // 1. Function to fetch and display the user list
+        async function fetchUsers() {
+            try {
+                const { data: users, error } = await supabase
+                    .from('users')
+                    .select('username, loginner_type')
+                    .order('username', { ascending: true }); // Order by username ascending
+                
+                if (error) {
+                    throw new Error(error.message);
+                }
+                
+                renderUsersTable(users || []);
+            } catch (error) {
+                console.error('Error fetching users:', error);
+                document.getElementById('usersTableContainer').innerHTML = `<div class="empty-state message-error" style="color:#721c24;">Failed to load user list: ${error.message}</div>`;
+            }
+        }
+
+        // 2. Function to handle the delete operation
+        async function deleteUser(username) {
+            deleteButton.disabled = true;
+            deleteButton.textContent = 'Deleting...';
+            messageBox.style.display = 'none';
+
+            if (!username) {
+                showMessage('Please enter a username.', true);
+                deleteButton.disabled = false;
+                deleteButton.textContent = 'PERMANENTLY DELETE RECORD';
+                return;
+            }
+
+            // Confirm deletion
+            if (!confirm(`Are you sure you want to permanently delete the user: ${username}?`)) {
+                deleteButton.disabled = false;
+                deleteButton.textContent = 'PERMANENTLY DELETE RECORD';
+                return;
+            }
+
+            try {
+                // Use the delete RPC or DELETE API call
+                const { error } = await supabase
+                    .from('users')
+                    .delete()
+                    .eq('username', username); // Find the row where username matches
+
+                if (error) {
+                    throw new Error(error.message);
+                }
+                
+                showMessage(`Successfully deleted user: "${username}".`, false);
+                
+                // Refresh the list immediately
+                fetchUsers();
+
+            } catch (error) {
+                console.error('Deletion error:', error);
+                // Note: If you get a 401/403, it means the ANONYMOUS key doesn't have DELETE permission.
+                showMessage(`Deletion failed. Error: ${error.message}. (Check your Supabase policies).`, true);
+            } finally {
+                deleteButton.disabled = false;
+                deleteButton.textContent = 'PERMANENTLY DELETE RECORD';
+                usernameInput.value = ''; // Clear the input field
+            }
+        }
+
+        // Event listener for form submission
+        deleteForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const username = usernameInput.value.trim();
+            deleteUser(username);
+        });
+
+        // Initialize by fetching the user list
+        window.addEventListener('DOMContentLoaded', fetchUsers);
+    </script>
+</body>
+</html>

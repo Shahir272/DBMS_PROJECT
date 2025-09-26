@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New User - Blood Donater System</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-image: url('https://img-s-msn-com.akamaized.net/tenant/amp/entityid/AA1NfV0E.img?w=3816&h=2566&m=4&q=80');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 28px;
+        }
+
+        .header p {
+            color: #6b7280;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-select {
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><path fill="%23666" d="M2 0L0 2h4zm0 5L0 3h4z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 12px;
+            padding-right: 40px;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #6b7280;
+            border: 2px solid #e5e7eb;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+
+        .btn-back {
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            color: white;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(100, 116, 139, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+
+        .status-message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .status-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #f9fafb;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: #10b981;
+        }
+
+        .status-dot.disconnected {
+            background: #ef4444;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .required {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-card">
+            <div class="header">
+                <h1>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="m22 2-5 10-5-5-4 8"></path>
+                    </svg>
+                    Add New User
+                </h1>
+                <p>Blood Donater System - User Registration</p>
+            </div>
+
+            <div class="connection-status">
+                <div class="status-dot disconnected" id="statusDot"></div>
+                <span id="statusText">Connecting to database...</span>
+            </div>
+
+            <div id="statusMessage"></div>
+
+            <form id="addUserForm">
+                <div class="form-group">
+                    <label for="username">Username <span class="required">*</span></label>
+                    <input type="text" id="username" name="username" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password <span class="required">*</span></label>
+                    <input type="password" id="password" name="password" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="loginner_type">User Type <span class="required">*</span></label>
+                    <select id="loginner_type" name="loginner_type" class="form-control form-select" required>
+                        <option value="">Select user type</option>
+                        <option value="admin">Admin</option>
+                        <option value="donor">Donor</option>
+                        <option value="receiver">Receiver</option>
+                        <option value="institution">Institution</option>
+                    </select>
+                </div>
+
+                <div class="loading" id="loadingIndicator">
+                    <div class="spinner"></div>
+                    <p>Adding user...</p>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    Add User
+                </button>
+                
+                <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                    Reset Form
+                </button>
+
+                <a href="main.html" class="btn btn-back">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5"></path>
+                        <path d="M12 5l-7 7 7 7"></path>
+                    </svg>
+                    GO BACK
+                </a>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://webzraugawvynlhecefx.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndlYnpyYXVnYXd2eW5saGVjZWZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3OTM0OTUsImV4cCI6MjA3NDM2OTQ5NX0.lxSThsX4caJI9JFsADfUJMkpQ12jBscgSFkFhbWx2VI';
+        
+        let supabase = null;
+        let isConnected = false;
+
+        function initSupabase() {
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                updateConnectionStatus(true);
+                return true;
+            } catch (error) {
+                console.error('Error initializing Supabase:', error);
+                updateConnectionStatus(false);
+                showStatus('Failed to initialize database connection: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            isConnected = connected;
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (connected) {
+                statusDot.className = 'status-dot connected';
+                statusText.textContent = 'Connected to database';
+                submitBtn.disabled = false;
+            } else {
+                statusDot.className = 'status-dot disconnected';
+                statusText.textContent = 'Database connection failed';
+                submitBtn.disabled = true;
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusMessage.innerHTML = '';
+                }, 5000);
+            }
+        }
+
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        async function addUser(userData) {
+            if (!supabase || !isConnected) {
+                throw new Error('Database connection not available');
+            }
+
+            const { data, error } = await supabase
+                .from('users')
+                .insert([{
+                    user_id: generateUUID(),
+                    username: userData.username,
+                    password: userData.password,
+                    loginner_type: userData.loginner_type,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                }])
+                .select();
+
+            if (error) {
+                throw error;
+            }
+
+            return data;
+        }
+
+        function resetForm() {
+            document.getElementById('addUserForm').reset();
+            document.getElementById('statusMessage').innerHTML = '';
+        }
+
+        function showLoading(show) {
+            const loading = document.getElementById('loadingIndicator');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (show) {
+                loading.style.display = 'block';
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Adding User...';
+            } else {
+                loading.style.display = 'none';
+                submitBtn.disabled = !isConnected;
+                submitBtn.textContent = 'Add User';
+            }
+        }
+
+        document.getElementById('addUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const userData = {
+                username: formData.get('username').trim(),
+                password: formData.get('password'),
+                loginner_type: formData.get('loginner_type')
+            };
+
+            // Basic validation
+            if (!userData.username || !userData.password || !userData.loginner_type) {
+                showStatus('Please fill in all required fields', 'error');
+                return;
+            }
+
+            if (userData.username.length < 3) {
+                showStatus('Username must be at least 3 characters long', 'error');
+                return;
+            }
+
+            if (userData.password.length < 6) {
+                showStatus('Password must be at least 6 characters long', 'error');
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                const result = await addUser(userData);
+                showStatus(`User "${userData.username}" has been successfully added to the system!`, 'success');
+                resetForm();
+            } catch (error) {
+                console.error('Error adding user:', error);
+                if (error.message.includes('duplicate key')) {
+                    showStatus('Username already exists. Please choose a different username.', 'error');
+                } else {
+                    showStatus('Failed to add user: ' + error.message, 'error');
+                }
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            initSupabase();
+        });
+    </script>
+</body>
+</html>
